@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <div style="display:flex; align-items:center; gap: 15px; margin-bottom:15px;">
+            <img src="logo.jpg" style="height: 45px;">
+            <h1>CAREER PORTAL</h1>
+        </div>
+        <h2> ADMIN LOGIN </h2>
+        <input id="emailId" placeholder="email">
+        <input id="password" placeholder="password">
+        <button onclick="login()">LOGIN</button>
+
+        <hr>
+        <h2> CREATE JOB </h2>
+        <input id="jobTitle" placeholder="Title">
+        <input id="jobInfo" placeholder="info">
+        <input id="place" placeholder="place">
+        <input id="jobType" placeholder="category">
+        <button onclick="createJob()">CREATE JOB</button>
+
+        <hr>
+        <h2> JOBS </h2>
+        <input type="file" id="resumeFile">
+        <button onclick="loadJobs()">LOAD JOBS</button>
+        <div id ="jobs"></div>
+
+        <script>
+            let token="";
+            async function login(){
+                const mailVal = document.getElementById("emailId").value;
+                const passVal = document.getElementById("password").value;
+                const res = await fetch("http://localhost:3000/admin/login",{
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({
+                        email:mailVal,
+                        password:passVal
+                    })
+                });
+                const data = await res.json();
+                token = data.token;
+                alert("LOGGED IN");
+            }
+            async function createJob(){
+                const a = document.getElementById("jobTitle").value;
+                const b = document.getElementById("jobInfo").value;
+                const c = document.getElementById("place").value;
+                const d = document.getElementById("jobType").value;
+                await fetch("http://localhost:3000/admin/jobs",{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Authorization":"Bearer "+token
+                    },
+                    body:JSON.stringify({
+                        jobTitle:a,
+                        jobInfo:b,
+                        place:c,
+                        jobType:d
+                    })
+                });
+                alert("JOB CREATED");
+            }
+            async function loadJobs(){
+                const res = await fetch("http://localhost:3000/admin/jobs");
+                const data = await res.json();
+                let view = "";
+                data.forEach(function(item){
+                view += "<div>"
+                    + item.jobTitle+" - "+item.place
+                    + " <button onclick='apply("+item.id+")'>Apply</button>"
+                    + " <button onclick='editJob("+item.id+")'>Update</button>"
+                    + " <button onclick='removeJob("+item.id+")'>Delete</button>"
+                    + "</div>";
+                });
+                document.getElementById("jobs").innerHTML=view;
+            }
+            async function apply(id){
+                const e =document.getElementById("resumeFile").files[0];
+                const formData = new FormData();
+                formData.append("applicantId","Test User");
+                formData.append("mailId","test@mail.com");
+                formData.append("contactNo","777777");
+                formData.append("resume",e);
+                
+                await fetch("http://localhost:3000/apply/"+id,{
+                    method:"POST",
+                    body:formData
+                });
+                alert("APPLIED");
+            }
+            async function editJob(id){
+                const jobTitle = prompt("New title");
+                await fetch("http://localhost:3000/admin/jobs/"+id,{   
+                    method:"PATCH",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Authorization":"Bearer "+token
+                    },
+                    body: JSON.stringify({ jobTitle:jobTitle })
+                });
+                alert("Updated");
+                loadJobs();
+            }
+            async function removeJob(id){
+                await fetch("http://localhost:3000/admin/jobs/"+id,{
+                    method:"DELETE",
+                    headers:{
+                        "Authorization":"Bearer "+token 
+                    }
+                });
+                alert("Deleted");
+                loadJobs();
+            };
+        </script>
+    </body>
+</html>

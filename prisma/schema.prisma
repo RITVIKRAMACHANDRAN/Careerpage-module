@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Position {
+  id           Int          @id @default(autoincrement())
+  jobTitle     String
+  jobInfo      String
+  place        String
+  jobType      String
+  isActive     Boolean      @default(true)
+  postedOn     DateTime     @default(now())
+  applications Candidates[]
+}
+
+model Candidates {
+  id          Int      @id @default(autoincrement())
+  positionId  Int
+  applicantId String
+  mailId      String
+  contactNo   String
+  filePath    String
+  status      String   @default("Applied")
+  appliedOn   DateTime @default(now())
+  position    Position @relation(fields: [positionId], references: [id])
+}
